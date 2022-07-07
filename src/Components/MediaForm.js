@@ -33,23 +33,27 @@ const MediaForm = ({ addTextbox, addCard }) => {
 
     return (
         <form onSubmit={handleSubmit}>
-            <label htmlFor="title">Title</label>
-            <input type="tytle" id="title" value={title} onChange={(e)=> handleChange(e)} />
-            <label htmlFor="sequenceNo">Sequence No</label>
-            <input type="number" id="sequenceNo" value={sequenceNo} onChange={(e)=> handleChange(e)} />
+            <label htmlFor="title" className='m-2'>Title:</label>
+            <input type="tytle" id="title" className='m-2' value={title} onChange={(e)=> handleChange(e)} />
+            <br/>
+            <label htmlFor="sequenceNo" className='m-2'>Sequence Number:</label>
+            <input type="number" id="sequenceNo" className='m-2' value={sequenceNo} onChange={(e)=> handleChange(e)} />
+            <br/>
             { isFileVisible ? (
                 <>
-                    <label htmlFor="file">File</label>
+                    <label htmlFor="file" className='m-2'>Image:</label>
                     <input type="file" id="file" onChange={handleChange} />
+                    <br/>
                 </>
             ) : (
                 <>
-                    <label htmlFor="text">Text</label>
-                    <input type="text" id="text" value={text} onChange={(e)=> handleChange(e)} />
+                    <label htmlFor="text" className='m-2'>Text:</label>
+                    <textarea type="text" id="text" value={text} onChange={(e)=> handleChange(e)} />
+                    <br/>
                 </>
             )}
-            <button type="button" onClick={() => setIsFileVisible(!isFileVisible)}>toggle</button>
-            <button type="submit">Submit</button>
+            <button type="button" className='btn btn-primary m-2' onClick={() => setIsFileVisible(!isFileVisible)}>toggle</button>
+            <button type="submit" className='m-2 btn btn-success'>Submit</button>
         </form>
     );
 }

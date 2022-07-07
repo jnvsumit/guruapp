@@ -1,4 +1,3 @@
-//Create a homepage with a list of cards and textbox and a button to delete one card or textbox and edit it.
 import React from "react";
 import { useState, useEffect } from "react";
 import Card from "../Components/Card";
@@ -7,17 +6,21 @@ import Popup from "../Components/Popup";
 import Textbox from "../Components/Textbox";
 import config from '../config';
 
-const Homepage = () => {
+//react icons
+import { FaPlus } from "react-icons/fa";
+import { FaMinus } from "react-icons/fa";
+
+const Homepage = (props) => {
+    const { isAuthenticated, token } = props;
     const [cardsOrTextbox, setCardsOrTextbox] = useState([]);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
 
     const deleteCardOrTextboxById = async (id) => {
-        console.log("Handling delete request");
-        console.log(id);
         fetch(`${config.api.url}/media?mediaId=${id}`, {
             method: "PATCH",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "x-token": token,
             },
             body: JSON.stringify({
                 del: true
@@ -32,16 +35,48 @@ const Homepage = () => {
             console.log(data.message);
             return null;
         })
-        .then(() => {
-            setCardsOrTextbox(cardsOrTextbox.filter(cardsOrTextbox => cardsOrTextbox.id !== id));
+        .then(async () => {
+            await fetchCardsOrTextboxs();
         })
     }
 
-    const editTextboxById = async (id, text, sequenceNo) => {
+    const editCardById = async (id, description, label, sequenceNo, image) => {
+        const formData = new FormData();
+        if(image !== "") {
+            formData.append("image", image, image.name);
+        }
+        formData.append("mediaTitle", label);
+        formData.append("sequenceNo", sequenceNo);
+
         fetch(`${config.api.url}/media?mediaId=${id}`, {
             method: "PATCH",
             headers: {
-                "Content-Type": "application/json"
+                "x-token": token,
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                return data.data
+            }
+
+            console.log(data);
+        })
+        .then(async () => {
+            await fetchCardsOrTextboxs();
+        })
+    }
+
+
+
+    const editTextboxById = async (id, text, sequenceNo) => {
+        console.log(token, id, text, sequenceNo);
+        fetch(`${config.api.url}/media?mediaId=${id}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "x-token": token,
             },
             body: JSON.stringify({
                 mediaContent: text,
@@ -58,10 +93,8 @@ const Homepage = () => {
             console.log(data);
             return null;
         })
-        .then(() => {
-            const CardsOrTextbox = cardsOrTextbox.map(cardsOrTextbox => cardsOrTextbox.id === id ? {...cardsOrTextbox, mediaContent: text} : cardsOrTextbox);
-            CardsOrTextbox.sort((a, b) => a.sequenceNo - b.sequenceNo);
-            setCardsOrTextbox(CardsOrTextbox);
+        .then(async () => {
+            await fetchCardsOrTextboxs();
         })
     }
 
@@ -101,14 +134,13 @@ const Homepage = () => {
             }));
 
             return Promise.resolve(cardOrTextboxData);
-        }).then(cardOrTextboxData => {
-            cardOrTextboxData.sort((a, b) => a.sequenceNo - b.sequenceNo);
-            setCardsOrTextbox(cardOrTextboxData);
+        }).then(cardsOrTextboxData => {
+            cardsOrTextboxData = cardsOrTextboxData.sort((a, b) => a.sequenceNo - b.sequenceNo);
+            setCardsOrTextbox(cardsOrTextboxData);
         })
     };
 
     const addCard = (image, label, description, sequenceNo) => {
-        console.log("Handling add card request", image, label, description, sequenceNo);
         const formData = new FormData();
         formData.append("image", image, image.name);
         formData.append("mediaTitle", label);
@@ -118,6 +150,9 @@ const Homepage = () => {
 
         fetch(`${config.api.url}/media`, {
             method: "POST",
+            headers: {
+                "x-token": token,
+            },
             body: formData
         })
         .then(res => res.json())
@@ -129,8 +164,8 @@ const Homepage = () => {
             console.log(data.message);
             return null;
         })
-        .then(() => {
-            fetchCardsOrTextboxs();
+        .then(async () => {
+            await fetchCardsOrTextboxs();
         })
     }
 
@@ -138,7 +173,8 @@ const Homepage = () => {
         fetch(`${config.api.url}/media`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "x-token": token,
                 },
                 body: JSON.stringify({
                     mediaContent: text,
@@ -155,8 +191,8 @@ const Homepage = () => {
                 console.log(data.message);
                 return null;
             })
-            .then(() => {
-                fetchCardsOrTextboxs();
+            .then(async () => {
+                await fetchCardsOrTextboxs();
             }
         )
     }
@@ -182,14 +218,20 @@ const Homepage = () => {
         })();
     }, []);
 
+
+
     return (
-        <div className="container">
-            <div className="h1">Homepage</div>
+        <div className="container" style={{minHeight: "700px"}}>
+            <div className="py-4">
+                <span className="text-dark h2">
+                    श्री श्री १००८ श्री स्वामी कबीर जी महाराज 'परमहंस'
+                </span>
+            </div>
             <ul className="list-group">
                 {cardsOrTextbox.map(media => {
                     if (media.type === "card") {
                         return (
-                            <li className="list-group-item" key={media.id}>
+                            <li className="list-group-item my-4 p-2" style={{border: `${isAuthenticated ? "1px" : "0px"}`}} key={media.id}>
                                 <Card
                                     key={media.id}
                                     image={media.image}
@@ -198,12 +240,14 @@ const Homepage = () => {
                                     sequenceNo={media.sequenceNo}
                                     description={media.description}
                                     deleteCardById={deleteCardOrTextboxById}
+                                    isAuthenticated={isAuthenticated}
+                                    editCardById={editCardById}
                                 />
                             </li>
                         );
                     } else {
                         return (
-                            <li className="list-group-item" key={media.id}>
+                            <li className="list-group-item my-4 p-2" style={{border: `${isAuthenticated ? "1px solid" : "0px"}`}} key={media.id}>
                                 <Textbox
                                     key={media.id}
                                     text={media.text}
@@ -211,16 +255,21 @@ const Homepage = () => {
                                     sequenceNo={media.sequenceNo}
                                     deleteTextboxById={deleteCardOrTextboxById}
                                     editTextboxById={editTextboxById}
+                                    isAuthenticated={isAuthenticated}
                                 />
                             </li>
                         );
                     }
                 })}
             </ul>
+            { isAuthenticated && <>
             <Popup isOpen={isPopupOpen} closePopup={togglePopup} openPopup={togglePopup}>
                 <MediaForm addTextbox={addTextbox} addCard={addCard}/>
             </Popup>
-            <button className="btn btn-primary" onClick={togglePopup}>Add Media</button>
+            <button className="btn btn-primary px-3 py-2 m-2" onClick={togglePopup}>
+                {isPopupOpen ? <FaMinus height={40} width={40} /> : <FaPlus height={40} width={40}/> }
+            </button>
+            </> }
         </div>
     );
 }

@@ -11,11 +11,15 @@ const Popup = ({ isOpen, children }) => {
     }, [isOpen]);
 
     return (
-        <div id="popup" className={isVisible ? "visible" : "invisible"} >
-            <div className="popup-content">
-                {children}
-            </div>
-        </div>
+        <>
+            { isVisible && (
+            <div id="popup" className="p-4 border rounded" >
+                <div className="popup-content">
+                    {children}
+                </div>
+            </div> )
+            }
+        </>
     );
 }
 
